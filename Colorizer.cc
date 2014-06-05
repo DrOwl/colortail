@@ -20,6 +20,7 @@
 #include "Colorizer.h"
 #include "CfgFileParser.h"
 #include "TailFile.h"
+#include "multicoloured_string.hpp"
 
 #include <assert.h>
 #include <iostream>
@@ -88,168 +89,67 @@ Colorizer::~Colorizer()
 
 string Colorizer::colorize(const char *str)
 {
-   // colorize the string, returns a new string containing
-   // the colorized version of str
-   // RETURN: new string with result
+		// colorize the string, returns a new string containing
+		// the colorized version of str
+		// RETURN: new string with result
 
-   // check that a list exists
-   assert (m_items_list != NULL);
-   
-   regmatch_t pmatch[10];
-   int found = 0, submatch = 0, j;
-   char color[MAX_CHARS_READ][20];
+		// check that a list exists
+	assert (m_items_list != NULL);
 
-   // set all the color strings to empty strings
-   for (int f = 0 ; f < MAX_CHARS_READ ; f++)
-   {
-      color[f][0] = '\0';
-   }
-   
-   // make an iterator
-   ListIterator<SearchData*> itr(*m_items_list);
+	multicoloured_string_t val(str);
+		
+	regmatch_t pmatch[10];
+	int found = 0, submatch = 0, j;
 
-   // will contain the new string
-   ostringstream newstr;
-   
-   SearchData *current;
-   int i = 0;
-   // go through all the elements in the list
-   for (itr.init() ; !itr ; ++itr, i++)
-   {
-      current = itr();
+	// make an iterator
+	ListIterator<SearchData*> itr(*m_items_list);
 
-      // check for match
-      if (regexec(current->m_preg, str, 10, pmatch, 0) == 0)
-      {
+	// will contain the new string
+	ostringstream newstr;
+	
+	SearchData *current;
+	int i = 0;
+	// go through all the elements in the list
+	for (itr.init() ; !itr ; ++itr, i++)
+	{
+		 current = itr();
+
+		 // check for match
+		 if (regexec(current->m_preg, val.c_str(), 10, pmatch, 0) == 0)
+		 {
 	 // TODO: check for callback function
 	 // TODO: call callback function
 	 
-	 found = 1;
+			found = 1;
 
-	 // Check to see if this is a substring match
-	 if (pmatch[1].rm_so != -1)
-	 {
-	    submatch = 1;
-	    // Note: start at offset 1 to get only submatches
+		 // Check to see if this is a substring match
+			 if (pmatch[1].rm_so != -1)
+			 {
+					submatch = 1;
+					// Note: start at offset 1 to get only submatches
 
-	    for (j = 1 ; pmatch[j].rm_so != -1 && j <= 10 ; j++)
-	    {
-	       // go through all the character positions
-	       // that the submatch is for
-	       for (int k = pmatch[j].rm_so ; k < (pmatch[j].rm_eo) ; k++)
-	       {
-		  
-		  // set the color in the color string array
-		  strcpy(color[k], current->m_ansi_color_code);
-	       }
-	    }
-	 }
-	 else
-	 {
-	    // not a substring match, colorize whole string.
-	    // stop looking for other matches as well
+					for (j = 1 ; pmatch[j].rm_so != -1 && j <= 10 ; j++)
+					{
+						val += region(
+							val.str().begin() + pmatch[j].rm_so, 
+							val.str().begin() + pmatch[j].rm_eo, 
+							current->m_ansi_color_code
+						);
+					}
+			 }
+			 else
+			 {
+					// not a substring match, colorize whole string.
+					// stop looking for other matches as well
 
-	    submatch = 0;
+					submatch = 0;
+					val += region(val.str().begin(), val.str().end(), current->m_ansi_color_code);
 
-	    // write ansi color code
-	    newstr << current->m_ansi_color_code;
-	    
-	    // check if str ends in '\n'
-	    int len = strlen(str);	
-	    if (str[len-1] == '\n')
-	    {
-	       for (int a = 0 ; a < len-1 ; a++)
-	       {
-		  newstr.put(str[a]);
-	       }
-	    }
-	    else
-	    {
-	       // doesn't end in '\n'
-	       newstr << str;
-	    }
+			 }
+		 }
+	}
 
-	    // write ansi reset str and a newline
-	    newstr << ANSI_RESET_STR << endl ;
-	    // return the new string
-	    return newstr.str();
-	 }
-      }
-   }
+	newstr << val;
+	return newstr.str();
 
-   // did we get a match
-   if (found == 0)
-   {
-      // no we didn't
-      // print without color
-      // check if str ends in '\n'
-      if (str[strlen(str)-1] == '\n')
-      {
-	 newstr << str ;
-      }
-      else
-      {
-	 // doesn't end in '\n'
-	 newstr << str << endl ;
-      }
-
-      // return the new string
-      return newstr.str();
-   }
-
-   // did we find submatches?
-   if (submatch == 1)
-   {
-      int last_was_reset_str = 1;
-      string  last_color_was;
-      // iiterate through all the characters
-      int l = strlen(str);
-      for (i = 0 ; i < l ; i++)
-      {
-	 if (color[i][0] == '\0')
-	 {
-	    // no color for this position
-	    if (last_was_reset_str != 1)
-	    {
-	       // write reset string
-	       newstr << ANSI_RESET_STR;
-	       // remeber that we wrote it
-	       last_was_reset_str = 1;
-	       last_color_was = string();
-	    }
-	 }
-	 else if ( last_color_was != color[i] )
-	 {
-	    // a color for this position
-	    // reset ansi reset string checker
-	    last_was_reset_str = 0;
-	    // write color
-	    newstr << color[i];
-	    // save color
-	    last_color_was = color[i];
-	 }
-
-	 // write current character
-	 newstr.put(str[i]);
-      }
-      
-      // check if last wasn't the ansi reset string
-      if (last_was_reset_str != 1)
-      {
-	 // write reset string
-	 newstr << ANSI_RESET_STR;
-      }
-      
-      // write newline and null
-      //newstr << endl << ends;
-      // newstr << ends;
-      	 
-      return newstr.str();
-      
-   }
-   
-      
-   // should never get here
-	string empty = "";
-   	return empty;
 }
