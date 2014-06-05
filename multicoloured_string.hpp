@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <ostream>
+#include "Colorizer.h"
 
 using namespace std;
 
@@ -116,6 +118,7 @@ private:
 //	return rhs.begin() == lhs;
 //}
 
+inline
 colour_region_list_t::const_iterator
 find_colour(
 	colour_region_list_t::const_iterator first, 
@@ -133,6 +136,7 @@ find_colour(
 	return v;
 }
 
+inline
 ostream& operator<<(ostream& os, multicoloured_string_t const& val) {
 
 	//	If we've an empty regions list
@@ -171,6 +175,7 @@ ostream& operator<<(ostream& os, multicoloured_string_t const& val) {
 	return os;
 }
 
+inline
 coloured_region_t
 region(string::const_iterator start, string::const_iterator end, string const& col) {
 	coloured_region_t v = { start, end, col };
@@ -178,3 +183,4 @@ region(string::const_iterator start, string::const_iterator end, string const& c
 }
 
 #endif //COLORTAIL_MULTICOLOURED_STRING_HPP
+

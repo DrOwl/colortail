@@ -20,6 +20,8 @@ TailFile.cc \
 TailFile.h \
 Usage.cc \
 Usage.h \
+multicoloured_string.hpp \
+multicoloured_string.cpp \
 main.cc \
 main.h
 
