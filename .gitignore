@@ -1,3 +1,7 @@
 autom4te.cache
 configure
 depcomp
+aclocal.m4
+missing
+mkinstalldirs
+Makefile.in
