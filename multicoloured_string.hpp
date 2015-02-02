@@ -128,7 +128,7 @@ find_colour(
 	colour_region_list_t::const_iterator i = first;
 	colour_region_list_t::const_iterator v = last;
 	for(; i != last; ++i) {
-		if( val <= i->end && (distance(val, i->end) <= distance(i->begin, i->end)) ) {
+		if( val < i->end && (distance(val, i->end) <= distance(i->begin, i->end)) ) {
 			v = i;
 		}
 	}
