@@ -6,3 +6,9 @@ missing
 mkinstalldirs
 Makefile.in
 Makefile
+*.o
+colortail
+config.*
+compile
+stamp-h1
+.deps
